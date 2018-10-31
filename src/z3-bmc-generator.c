@@ -15,7 +15,7 @@
 
 
 /* 
- * Function implementations in z3-bmc-generator.h
+ * Function implementations of z3-bmc-generator.h
  */
 
 // Pair
@@ -330,6 +330,15 @@ int read_prefile(char* file, char*** lines) {
     return pre_line_num;
 }
 
+void declare_variable(Stage* stage) {
+    for (int i = 0; i < size_of_map(stage); i++) {
+        Pair* pair = get_pair_by_index(stage, i);
+        for (int j = 0; j <= pair->index; j++) {
+            printf("(declare-const %si%d Int)\n", 
+                    pair->name, j);
+        }
+    }
+}
 
 void bmc_generator(int pre_line_num, char** pre_lines) {
     int index = 0;
@@ -358,10 +367,12 @@ void bmc_generator(int pre_line_num, char** pre_lines) {
             char* c = g_assignment_condition(pre_lines[index] + 4, stage_c, 1);
             push_stack_c(condition_stack, c);
             push_stack_s(stage_stack, clone_stage(stage_c));
+
         } else if (hasString(pre_lines[index], "ELSE:")) {
             Stage* tmp = stage_c;
             stage_c = pop_stack_s(stage_stack);
             push_stack_s(stage_stack, tmp);
+
         } else if (hasString(pre_lines[index], "END")) {
             Stage* else_stage = stage_c;
             Stage* if_stage = pop_stack_s(stage_stack);
@@ -370,6 +381,7 @@ void bmc_generator(int pre_line_num, char** pre_lines) {
             destroy_stage(&if_stage);
             destroy_stage(&else_stage);
             free(condition);
+
         } else {
             char* f = g_assignment_condition(pre_lines[index], stage_c, 0);
             add_formula(f, stage_c);
@@ -378,6 +390,9 @@ void bmc_generator(int pre_line_num, char** pre_lines) {
 
         index++;
     }
+
+    declare_variable(stage_c);
+    printf("\n");
 
     char *final = generate_formula(stage_c);
     printf("%s\n", final);
@@ -403,7 +418,6 @@ int main(int argc, char** argv) {
     int pre_line_num = 0;
 
     pre_line_num = read_prefile(argv[1], &pre_lines);
-
     bmc_generator(pre_line_num, pre_lines);
 
     for (int i = 0; i < pre_line_num; i++) {

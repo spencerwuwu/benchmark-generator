@@ -385,7 +385,7 @@ void write_body_lines() {
 int main(int argc, char** argv) {
     if (argc != 2 && argc != 5) {
         fprintf(stderr, "./generator filename <Variable Baseline If-else>\n");
-        fprintf(stderr, "2 files filename.java and filename.pre will be generated\n");
+        fprintf(stderr, "2 files filename.c and filename.pre will be generated\n");
         exit(1);
     }
     if (argc == 5) {
@@ -405,7 +405,7 @@ int main(int argc, char** argv) {
     LINE = (BASELINE + IF_NUM * 3);
 
     char *target_java = NULL, *target_bmc = NULL;
-    asprintf(&target_java, "%s.java", argv[1]);
+    asprintf(&target_java, "%s.c", argv[1]);
     asprintf(&target_bmc, "%s.pre", argv[1]);
     Java_fd = open_filefd(target_java);
     Bmc_fd = open_filefd(target_bmc);
@@ -416,6 +416,7 @@ int main(int argc, char** argv) {
     Cmps = init_Array();
 
     writeline("// Note: only +, - operations\n");
+    writeline("//  1\% have V * N\n");
     writeline("// Parameters:\n");
     char *str = NULL;
     asprintf(&str, "//   Variables:   %d\n", VAR_NUM);
@@ -439,22 +440,13 @@ int main(int argc, char** argv) {
 
     push_element(Vars, "cur_");
 
-    writeline("public void reduce(Text prefix, Iterator<IntWritable> iter,\n \
-        OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException {\n");
-
+    writeline("int main() {\n");
     write_init_vars();
 
-    writeline("while (iter.hasNext()) {\n");
-    writeline("cur_ = iter.next().get();\n");
-
     write_body_lines();
+    writeline("return 0;\n}\n");
 
-    writeline("}\n");
 
-
-    writeline("output.collect(prefix, new IntWritable(");
-    writeline(Vars->elements[get_random(Vars->size)]);
-    writeline("));\n}\n");
 
     destroy_Array(Vars);
     destroy_Array(Opers);

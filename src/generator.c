@@ -121,13 +121,13 @@ void init_vars() {
 void init_opers() {
     push_oper(Opers, "+", 1);
     push_oper(Opers, "-", 1);
-    //push_oper(Opers, "*", 1);
-    //push_oper(Opers, "/", 1);
-    //push_oper(Opers, "%", 1);
+    push_oper(Opers, "*", 1);
+    push_oper(Opers, "/", 1);
+    push_oper(Opers, "%", 1);
     push_oper(Opers, "+=", 0);
     push_oper(Opers, "-=", 0);
-    //push_oper(Opers, "*=", 0);
-    //push_oper(Opers, "/=", 0);
+    push_oper(Opers, "*=", 0);
+    push_oper(Opers, "/=", 0);
 }
 
 void init_cmps() {
@@ -374,39 +374,13 @@ int main(int argc, char** argv) {
     init_cmps();
     init_line_types();
 
-    /*
-     * General use example heading:
-     *
-         writeline("public class test {\n \
-            public static void main(String []args) {\n");
-     */
-
     push_element(Vars, "cur");
 
-    writeline("public void reduce(Text prefix, Iterator<IntWritable> iter,\n \
-        OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException {\n");
-
+    writeline("int main() {\n");
     write_init_vars();
 
-    writeline("while (iter.hasNext()) {\n");
-    writeline("cur = iter.next().get();\n");
-
     write_body_lines();
-
-    writeline("}\n");
-
-    /*
-     * General use example ending:
-     *
-        writeline("}\n}\n");
-     *
-     */
-
-    //writeline("double sum = 0;\n");
-    // sum_up_vars();
-    writeline("output.collect(prefix, new IntWritable(");
-    writeline(Vars->elements[get_random(Vars->size)]);
-    writeline("));\n}\n");
+    writeline("return 0;\n}\n");
 
     destroy_Array(Vars);
     destroy_Array(Opers);

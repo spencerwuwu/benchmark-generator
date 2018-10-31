@@ -10,19 +10,15 @@
 
 First the program generates a template as below. It declares a variable set including **N** random variables and a variable **cur**. Then it chooses an arbitrary variable to output at the end.
 ```
-public void reduce(Text prefix, Iterator<IntWritable> iter,
-		OutputCollector<Text, DoubleWritable> output, Reporter reporter) throws IOException {
+int main() {
 	// Declare variables v1 - vn and cur
-	double cur = 0;
-	// double v1 = 0; ....
+	int cur = 0;
+	int v1 = 0; ....
 
-	while (iter.hasNext()) {
-		cur = iter.next().get();
-		/* Loop body */
-	}
+	/* Function body */
 
 	// Pick one to collect
-	output.collect(prefix, new DoubleWritable(vn));
+  return 0;
 }
 ```
 

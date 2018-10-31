@@ -74,4 +74,5 @@ void destroy_stack_c(Stack_c** stack);
 
 int hasString(char* src, char* target);
 int read_prefile(char* file, char*** pre_lines);
+void declare_variable(Stage* stage);
 void bmc_generator();
