@@ -1,4 +1,4 @@
-*generator
-*-debug
+src/*generator
+src/*-debug
 *.java
 *.pre
