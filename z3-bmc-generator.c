@@ -80,6 +80,17 @@ Stage* new_stage() {
     return new;
 }
 
+Stage* clone_stage(Stage* stage) {
+    Stage* new = malloc(sizeof(Stage));
+    int size = stage->formula_size;
+    new->formulas = malloc(sizeof(char *) * size);
+    new->formula_size = size;
+    for (int i = 0; i < size; i++)
+        new->formulas[i] = strdup(stage->formulas[i]);
+    new->map = clone_map(stage->map);
+    return new;
+}
+
 void destroy_stage(Stage** stage) {
     Stage* target = *stage;
     destroy_map(&target->map);
@@ -95,11 +106,11 @@ int size_of_map(Stage* stage) {
     return stage->map->size;
 }
 
-Pair* get_pair_byindex(Stage* stage, int index) {
+Pair* get_pair_by_index(Stage* stage, int index) {
     return stage->map->pairs[index];
 }
 
-Pair* get_pair_byname(Stage* stage, char* name) {
+Pair* get_pair_by_name(Stage* stage, char* name) {
     Pair** pairs = stage->map->pairs;
     for (int i = 0; i < size_of_map(stage); i++) {
         if (hasString(name, pairs[i]->name))
@@ -124,7 +135,8 @@ char* generate_formula(Stage* stage) {
         } else {
             char *tmp = strdup("(and ");
             char *n_formula = stage->formulas[i];
-            tmp = realloc(tmp, strlen(formula) + strlen(n_formula) + 4);
+            size_t size = strlen(tmp) + strlen(formula) + strlen(n_formula) + 4;
+            tmp = realloc(tmp, size);
             strcat(tmp, formula);
             strcat(tmp, " ");
             strcat(tmp, n_formula);
@@ -143,19 +155,19 @@ Stage* merge_stages(char* condition, Stage* sa, Stage* sb) {
     stage->map = merge_map(sa->map, sb->map);
 
     for (int i = 0; i < size_of_map(stage); i++) {
-        Pair* cur = get_pair_byindex(stage, i);
-        Pair* pa = get_pair_byindex(sa, i);
-        Pair* pb = get_pair_byindex(sb, i);
+        Pair* cur = get_pair_by_index(stage, i);
+        Pair* pa = get_pair_by_index(sa, i);
+        Pair* pb = get_pair_by_index(sb, i);
         if (cur->index > pa->index) {
             char* f = NULL;
-            asprintf(&f, "(= %s%d %s%d )"
+            asprintf(&f, "(= %si%d %si%d )"
                     , cur->name, cur->index, pa->name, pa->index);
             add_formula(f, sa);
             free(f);
         }
         if (cur->index > pb->index) {
             char* f = NULL;
-            asprintf(&f, "(= %s%d %s%d )"
+            asprintf(&f, "(= %si%d %si%d )"
                     , cur->name, cur->index, pb->name, pb->index);
             add_formula(f, sb);
             free(f);
@@ -174,8 +186,120 @@ Stage* merge_stages(char* condition, Stage* sa, Stage* sb) {
     return stage;
 }
 
+char* g_assignment_condition(char* assignment, Stage* stage, int flag) {
+    // flag 0 -> assignment
+    // flag 1 -> condition
+    char* ptr = assignment;
+    char* formula = NULL;
+    int length = 0;
+    int pos = 0;
+    Pair* lhs = NULL;
+    int is_lhs = 1;
+    while (pos < (int)strlen(assignment)) {
+        length = 0;
+        while (*(ptr + length) != ' ' && pos + length < (int)strlen(assignment)) {
+            length += 1;
+        }
+        char* seg = malloc(length + 1);
+        seg[0] = '\0';
+        strncat(seg, ptr, length);
+        seg[length] = '\0';
+
+        char *new_seg = NULL;
+        if (hasString(seg, "_")) {
+            if (flag == 0 && is_lhs == 1) {
+                lhs = get_pair_by_name(stage, seg);
+                asprintf(&new_seg, "%si%d", seg, lhs->index + 1);
+                is_lhs = 0;
+            } else {
+                asprintf(&new_seg, "%si%d", seg, get_pair_by_name(stage, seg)->index);
+            }
+        } else {
+            new_seg = strdup(seg);
+        }
+
+        if (formula == NULL) {
+            formula = strdup(new_seg);
+        } else {
+            size_t len = strlen(formula) + strlen(new_seg) + 2;
+            formula = realloc(formula, len);
+            strcat(formula, " ");
+            strcat(formula, new_seg);
+        }
+
+
+        free(seg);
+        free(new_seg);
+        ptr += length + 1;
+        pos += length + 1;
+    }
+    if (lhs != NULL) lhs->index++;
+
+    return formula;
+}
+
+// Stack of Stage
+Stack_s* init_stack_s() {
+    Stack_s* stack = malloc(sizeof(Stack_s));
+    stack->elements = malloc(sizeof(Stack_s *) * 2);
+    stack->stack_ptr = 0;
+    stack->stack_space = 2;
+    return stack;
+}
+
+Stage* pop_stack_s(Stack_s* stack) {
+    if (stack->stack_ptr == 0) return NULL;
+    return stack->elements[--stack->stack_ptr];
+}
+
+void push_stack_s(Stack_s* stack, Stage* stage) {
+    stack->elements[stack->stack_ptr++] = stage; 
+    if (stack->stack_ptr >= stack->stack_space) {
+        int space = stack->stack_space * 2;
+        stack->elements = realloc(stack->elements, sizeof(Stage *) * space);
+        stack->stack_space = space;
+    }
+}
+
+void destroy_stack_s(Stack_s** stack) {
+    Stack_s* ptr = *stack;
+    free(ptr->elements);
+    free(ptr);
+    *stack = NULL;
+}
+
+// Stack of condition
+Stack_c* init_stack_c() {
+    Stack_c* stack = malloc(sizeof(Stack_c));
+    stack->elements = malloc(sizeof(Stack_c *) * 2);
+    stack->stack_ptr = 0;
+    stack->stack_space = 2;
+    return stack;
+}
+
+char* pop_stack_c(Stack_c* stack) {
+    if (stack->stack_ptr == 0) return NULL;
+    return stack->elements[--stack->stack_ptr];
+}
+
+void push_stack_c(Stack_c* stack, char* str) {
+    stack->elements[stack->stack_ptr++] = str;
+    if (stack->stack_ptr >= stack->stack_space) {
+        int space = stack->stack_space * 2;
+        stack->elements = realloc(stack->elements, sizeof(char *) * space);
+        stack->stack_space = space;
+    }
+}
+
+void destroy_stack_c(Stack_c** stack) {
+    Stack_c* ptr = *stack;
+    free(ptr->elements);
+    free(ptr);
+    *stack = NULL;
+}
+
 /* 
- * Local Functions 
+ * Functions 
  */
 int hasString(char* src, char* target) {
     if (strstr(src, target) != NULL)
@@ -190,6 +314,7 @@ int read_prefile(char* file, char*** lines) {
     char *buff = NULL;
     size_t size;
     int pre_line_num = 0;
+    char *free_buff = NULL;
     while (getline(&buff, &size, pre_file) > 0) {
         pre_line_num++;
         pre_lines = realloc(pre_lines, sizeof(char *) * pre_line_num);
@@ -197,7 +322,9 @@ int read_prefile(char* file, char*** lines) {
         int n = strlen(buff);
         if (buff[n - 1] == '\n')
             pre_lines[pre_line_num - 1][n - 1] = '\0';
+        free_buff = buff;
     }
+    free(free_buff);
     fclose(pre_file);
     *lines = pre_lines;
     return pre_line_num;
@@ -212,7 +339,6 @@ void bmc_generator(int pre_line_num, char** pre_lines) {
 
     init_map->size =  0;
     init_map->pairs = NULL;
-
     while (index < pre_line_num && hasString(pre_lines[index], "VAR:")) {
         var_name_num++;
         var_names = realloc(var_names, sizeof(char *) * var_name_num);
@@ -222,21 +348,46 @@ void bmc_generator(int pre_line_num, char** pre_lines) {
         index++;
     }
 
-    int stage_stack_size = 1;
-    Stage** stage_stack = malloc(sizeof(Stage *));
-    char** condition_stack = NULL;
-    int condition_stack_size = 0;
+    Stack_s* stage_stack = init_stack_s();
+    Stack_c* condition_stack = init_stack_c();
 
     Stage* stage_c = new_stage();
-    stage_stack[0] = stage_c;
     stage_c->map = clone_map(init_map);
     while (index < pre_line_num) {
+        if (hasString(pre_lines[index], "IF:")) {
+            char* c = g_assignment_condition(pre_lines[index] + 4, stage_c, 1);
+            push_stack_c(condition_stack, c);
+            push_stack_s(stage_stack, clone_stage(stage_c));
+        } else if (hasString(pre_lines[index], "ELSE:")) {
+            Stage* tmp = stage_c;
+            stage_c = pop_stack_s(stage_stack);
+            push_stack_s(stage_stack, tmp);
+        } else if (hasString(pre_lines[index], "END")) {
+            Stage* else_stage = stage_c;
+            Stage* if_stage = pop_stack_s(stage_stack);
+            char* condition = pop_stack_c(condition_stack);
+            stage_c = merge_stages(condition, if_stage, else_stage);
+            destroy_stage(&if_stage);
+            destroy_stage(&else_stage);
+            free(condition);
+        } else {
+            char* f = g_assignment_condition(pre_lines[index], stage_c, 0);
+            add_formula(f, stage_c);
+            free(f);
+        }
+
         index++;
     }
 
+    char *final = generate_formula(stage_c);
+    printf("%s\n", final);
+    free(final);
+
+    destroy_stack_s(&stage_stack);
+    destroy_stack_c(&condition_stack);
+    destroy_stage(&stage_c);
     destroy_map(&init_map);
     for (int i = 0; i < var_name_num; i++) {
-        printf("%s\n", var_names[i]);
         free(var_names[i]);
         var_names[i] = NULL;
     }
