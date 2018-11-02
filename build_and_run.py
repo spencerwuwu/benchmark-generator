@@ -10,10 +10,10 @@ def generate(if_num):
     no = 0
     while no < 10:
         target = path + "test" + str(if_num) + "_" + str(no)
-        re = os.system("./src/dual-generator " + target + " " + str(if_num * 5) + " " + str(if_num * 50) + " " + str(if_num))
+        re = os.system("./src/bmc-generator " + target + " " + str(if_num * 5) + " " + str(if_num * 50) + " " + str(if_num))
         time.sleep(1)
         while re != 0:
-            re = os.system("./src/dual-generator " + target + " " + str(if_num * 5) + " " + str(if_num * 50) + " " + str(if_num))
+            re = os.system("./src/bmc-generator " + target + " " + str(if_num * 5) + " " + str(if_num * 50) + " " + str(if_num))
             time.sleep(1)
         no += 1 
     

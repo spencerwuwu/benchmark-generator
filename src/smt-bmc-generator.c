@@ -6,11 +6,11 @@
 #include <errno.h>
 #include <time.h>
 
-#include "z3-bmc-generator.h"
+#include "smt-bmc-generator.h"
 
 /* 
  * Convert .pre to bounded model checking 
- * formula in z3
+ * smt formulas
  */
 
 
