@@ -14,7 +14,8 @@ $ ./generator filename <Variable Baseline If-else>
 ```
 ./smt-bmc-generator filename
 ```
-The smt-bmc-generator is a converter for .pre to smt-formula.
+The smt-bmc-generator symbolic executes .pre to a set of smt-formulas with
+[bounded model checking](http://fmv.jku.at/bmc/).
 
 
 ## Parameter
