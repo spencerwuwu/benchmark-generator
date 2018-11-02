@@ -1,5 +1,22 @@
 # Random Benchmark Generator
 
+Developed for the experiements of [J-ReCoVer](http://jrecover.iis.sinica.edu.tw/).
+
+## Usage
+```
+$ ./generator filename <Variable Baseline If-else>
+```
+```
+$ ./generator filename <Variable Baseline If-else>
+  2 files, filename.c and filename.pre will be generated
+  filename.pre is the intermediate code for smt-bmc-generator
+```
+```
+./smt-bmc-generator filename
+```
+The smt-bmc-generator is a converter for .pre to smt-formula.
+
+
 ## Parameter
 - Number of variable **N**
 - Number of `if-else`  **I**
@@ -8,7 +25,9 @@
 
 ## Approach
 
-First the program generates a template as below. It declares a variable set including **N** random variables and a variable **cur**. Then it chooses an arbitrary variable to output at the end.
+First the program generates a template as below. It declares a variable set including 
+**N** random variables and a variable **cur**. Then it chooses an arbitrary variable 
+to output at the end.
 ```
 int main() {
 	// Declare variables v1 - vn and cur
@@ -29,7 +48,8 @@ For the loop body, the program will generate **B**+3***I** lines, which contains
 - **I**  lines of   **} else {**
 - **I**  lines of   **}**
 
-First it determine the order of the lines randomly but in a reasonable way. For example a program like
+First it determine the order of the lines randomly but in a reasonable way. For example 
+a program like
 ```
 if (...) {
 	...
@@ -45,15 +65,18 @@ An **assignment** is  in the form of
 ```
 V = V1 b_op V2
 ```
+or
+```
+V = V1 u_op
+```
 
 A **condition** is 
 
 ```
 V cmp V1
 ```
-where **V** is chosen from the variable set. **V1 V2** can be either a variable or a number. **b_op** includes “+ - * / %”, and **cmp** includes “== != >= <= > <”.
-
-For the scalability experiment we remove “/ %” because these operations would be too hard for SMT solver.   
-For "*" it has a 1% chance to be used and it is always **V * N** where N is an integer.
+where **V** is chosen from the variable set. **V1 V2** can be either a variable or a 
+number. **b_op** includes “+ - * / %”, **u_op** includes “+= -= *= /= %=”, and **cmp** 
+includes “== != >= <= > <”.
 
 

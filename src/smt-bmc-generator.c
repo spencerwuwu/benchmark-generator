@@ -411,7 +411,7 @@ void bmc_generator(int pre_line_num, char** pre_lines) {
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        fprintf(stderr, "./z3-bmc-generator filename\n");
+        fprintf(stderr, "./smt-bmc-generator filename\n");
         exit(1);
     }
     char** pre_lines = NULL;
