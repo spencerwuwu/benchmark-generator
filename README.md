@@ -1,6 +1,7 @@
 # Random Benchmark Generator
 
 [![Build Status](https://travis-ci.org/spencerwuwu/benchmark-generator.png?branch=master)](https://travis-ci.org/spencerwuwu/benchmark-generator)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/dwyl/esta/issues)
 
 
 Developed for the experiements of [J-ReCoVer](http://jrecover.iis.sinica.edu.tw/).
